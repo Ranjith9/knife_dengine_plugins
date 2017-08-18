@@ -210,12 +210,7 @@ class Chef
 
           ip_attr = get_ip_attributes(locate_config_value(:azure_resource_group_name), locate_config_value(:azure_vm_name))
 
-#          ip_attr = get_ip_attributes
-          puts ip_attr[0]
-          puts ip_attr[1]  
-
           bootstrap_exec(ip_attr[0],ip_attr[1])
-#	  bootstrap_for_node(ip_attr[0],ip_attr[1])
 		  
         rescue => error
           service.common_arm_rescue_block(error)
@@ -396,7 +391,6 @@ class Chef
       end
 
       def bootstrap_for_node(fqdn,ip,port)
-          puts "Entering into bootstrap"
           bootstrap = Chef::Knife::Bootstrap.new
           bootstrap.name_args = fqdn
           bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
@@ -420,7 +414,6 @@ class Chef
         end
 		
 	def bootstrap_common_params(bootstrap,fqdn,ip)
-          puts "Entered into bootstrap parameters"
           bootstrap.config[:run_list] = locate_config_value(:run_list)
           bootstrap.config[:prerelease] = locate_config_value(:prerelease)
           bootstrap.config[:first_boot_attributes] = locate_config_value(:json_attributes) || {}
@@ -444,7 +437,6 @@ class Chef
 	def load_cloud_attributes_in_hints(fqdn,ip)
           # Modify global configuration state to ensure hint gets set by knife-bootstrap
           # Query azure and load necessary attributes.
-          puts "Loading hint attributes" 
           cloud_attributes = {}
           cloud_attributes["public_ip"] = ip
           cloud_attributes["vm_name"] = locate_config_value(:chef_node_name)
