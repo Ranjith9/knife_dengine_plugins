@@ -27,7 +27,7 @@ module Azure::ARM
         when 'vm_name'
           hints_json['vm_name'] = "[reference(#{resource_ids['vmId']}).osProfile.computerName]" if !hints_json.has_key? 'vm_name'
         when 'public_ip'
-          hints_json['public_ip'] = "[reference(#{resource_ids['depVm2']}).ipConfigurations[0].properties.publicIPAddress[0].ipAddress]" if !hints_json.has_key? 'public_ip'
+          hints_json['public_ip'] = "[reference(#{resource_ids['depVm2']}).ipConfigurations[0].properties.publicIPAddress]" if !hints_json.has_key? 'public_ip'
         when 'public_fqdn'
           hints_json['public_fqdn'] = "[reference(#{resource_ids['pubId']}).dnsSettings.fqdn]" if !hints_json.has_key? 'public_fqdn'
         when 'platform'
@@ -405,7 +405,7 @@ module Azure::ARM
             },
             "dependsOn" => [
               depNic1,
-              "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+              "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
 #              "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
             ],
             "properties"=> {
@@ -428,7 +428,7 @@ module Azure::ARM
                     "loadBalancerInboundNatRules"=> ([
                                 {
                                        "id"=> "[concat(resourceId('Microsoft.Network/loadBalancers', variables('lbName')), '/inboundNatRules/',variables('natRule'))]"
-                               }
+                                }
                     ] if params[:azure_availability_set] != 'null')
                   }
                 }
@@ -500,47 +500,6 @@ module Azure::ARM
               }
             }
           },
-          {
-            "type" => "Microsoft.Compute/virtualMachines/extensions",
-            "name" => extName,
-            "apiVersion" => "2015-05-01-preview",
-            "location" => "[resourceGroup().location]",
-            "copy" => {
-              "name" => "extensionLoop",
-              "count" => "[parameters('numberOfInstances')]"
-            },
-            "dependsOn" => [
-              depExt
-            ],
-            "properties" => {
-              "publisher" => "#{params[:chef_extension_publisher]}",
-              "type" => "#{params[:chef_extension]}",
-              "typeHandlerVersion" => "#{params[:chef_extension_version]}",
-              "autoUpgradeMinorVersion" => "#{params[:auto_upgrade_minor_version]}",
-              "settings" => {
-                "bootstrap_options" => {
-                  "chef_node_name" => chef_node_name,
-                  "chef_server_url" => "[parameters('chef_server_url')]",
-                  "validation_client_name" => "[parameters('validation_client_name')]",
-                  "bootstrap_version" => "[parameters('bootstrap_version')]",
-                  "node_ssl_verify_mode" => "[parameters('node_ssl_verify_mode')]",
-                  "node_verify_api_cert" => "[parameters('node_verify_api_cert')]",
-                  "bootstrap_proxy" => "[parameters('bootstrap_proxy')]"
-                },
-                "runlist" => "[parameters('runlist')]",
-                "validation_key_format" => "[parameters('validation_key_format')]",
-                "hints" => hints_json,
-                "client_rb" => "[parameters('client_rb')]",
-                "custom_json_attr" => "[parameters('custom_json_attr')]"
-              },
-              "protectedSettings" => {
-                "validation_key" => "[parameters('validation_key')]",
-                "client_pem" => "[parameters('client_pem')]",
-                "chef_server_crt" => "[parameters('chef_server_crt')]",
-                "encrypted_data_bag_secret" => "[parameters('encrypted_data_bag_secret')]"
-              }
-            }
-          }
         ]
       }
 

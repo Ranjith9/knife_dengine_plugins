@@ -24,7 +24,7 @@ module Engine
 	
 # Creation of VPN	
 	
-	def create_vpn(resource_group, name, vpn_cidr)
+    def create_vpn(resource_group, name, vpn_cidr)
         params = VirtualNetwork.new
 
         address_space = AddressSpace.new
@@ -47,7 +47,7 @@ module Engine
 
 # Creation of Security Rule and adding to NSG	
 	
-	def create_security_rule_for_nsg(name, nsg_name, sub_cidr, resource_group)
+    def create_security_rule_for_nsg(name, nsg_name, sub_cidr, resource_group)
 
         params = SecurityRule.new
         params.description = "AllowSSHProtocol"
@@ -98,14 +98,27 @@ module Engine
     end
 
     def check_data_bag(name)
-        databag_item = Chef::DataBagItem.new
-          if Chef::DataBag.list.key?("#{name}")
-          return 0
-          else
-          return 1
-          end
-    end
+      if Chef::DataBag.list.key?("network")
+          puts ''
+          puts "#{ui.color('Found databag for this', :cyan)}"
+          puts "#{ui.color('Searching data for current network in the data bag', :cyan)}"
+          puts ''
+          query = Chef::Search::Query.new
+          query_value = query.search(:network, "id:azure_#{name}")
+          if query_value == 0
 
-	
+            puts ""
+            puts "#{ui.color("The data bag item by name azure_#{name} already exists please check", :cyan)}"
+            puts "#{ui.color("Hence we are quiting ", :cyan)}"
+            puts ""
+            exit
+          else
+            return 1
+          end
+#       else
+#         return 1
+       end
+    end
   end
 end
+

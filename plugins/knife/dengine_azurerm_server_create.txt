@@ -3,7 +3,6 @@ require "#{File.dirname(__FILE__)}/base/dengine_azurerm_base"
 require 'securerandom'
 require "#{File.dirname(__FILE__)}/base/dengine_azure_common_bootstrap_options"
 require "#{File.dirname(__FILE__)}/base/dengine_azure_bootstrapper"
-require "#{File.dirname(__FILE__)}/base/dengine_azure_ip_attributes"
 
 class Chef
   class Knife
@@ -12,8 +11,7 @@ class Chef
       include Knife::DengineAzurermBase
       include Chef::Knife::Bootstrap::DengineAzureCommonBootstrapOptions
       include Chef::Knife::Bootstrap::DengineAzureBootstrapper
-      include Engine::DengineAzureIpAttributes
-	  
+
       banner "knife dengine azurerm server create (options)"
 
       attr_accessor :initial_sleep_delay
@@ -208,15 +206,14 @@ class Chef
 
           vm_details = service.create_server(create_server_def)
 
-          ip_attr = get_ip_attributes(locate_config_value(:azure_resource_group_name), locate_config_value(:azure_vm_name))
-
-#          ip_attr = get_ip_attributes
-          puts ip_attr[0]
-          puts ip_attr[1]  
-
-          bootstrap_exec(ip_attr[0],ip_attr[1])
-#	  bootstrap_for_node(ip_attr[0],ip_attr[1])
-		  
+          ip = service.show_server(config[:azure_vm_name], locate_config_value(:azure_resource_group_name))
+          puts "The public IP of the VM is: #{ip}"   
+          node_name = get_node(config[:azure_vm_name])
+          node_name.each do |node|
+          node.default_unless['cloud']['public_ipv4'] = "#{ip}"
+          node.default_unless['cloud']['provider'] = 'azure'
+          node.save
+          end
         rescue => error
           service.common_arm_rescue_block(error)
           exit
@@ -262,7 +259,7 @@ class Chef
 
         # We assign azure_vm_name to chef_node_name If node name is nill because storage account name is combination of hash value and node name.
         config[:chef_node_name] ||= locate_config_value(:azure_vm_name)
-
+        
         server_def[:azure_storage_account] = locate_config_value(:azure_vm_name) if server_def[:azure_storage_account].nil?
         server_def[:azure_storage_account] = server_def[:azure_storage_account].gsub(/[!@#$%^&*()_-]/,'')
 
@@ -395,67 +392,8 @@ class Chef
             :azure_image_reference_version)
       end
 
-      def bootstrap_for_node(fqdn,ip,port)
-          puts "Entering into bootstrap"
-          bootstrap = Chef::Knife::Bootstrap.new
-          bootstrap.name_args = fqdn
-          bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
-          bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
-          bootstrap.config[:ssh_port] = port
-          bootstrap.config[:identity_file] = locate_config_value(:identity_file)
-          bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name)
-          bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
-          bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
-          bootstrap.config[:environment] = locate_config_value(:environment)
-          # may be needed for vpc_mode
-          bootstrap.config[:host_key_verify] = config[:host_key_verify]
-          Chef::Config[:knife][:secret] = config[:encrypted_data_bag_secret] if config[:encrypted_data_bag_secret]
-          Chef::Config[:knife][:secret_file] = config[:encrypted_data_bag_secret_file] if config[:encrypted_data_bag_secret_file]
-          bootstrap.config[:secret] = locate_config_value(:encrypted_data_bag_secret)
-          bootstrap.config[:secret_file] = locate_config_value(:encrypted_data_bag_secret_file)
-          bootstrap.config[:bootstrap_install_command] = locate_config_value(:bootstrap_install_command)
-          bootstrap.config[:bootstrap_wget_options] = locate_config_value(:bootstrap_wget_options)
-          bootstrap.config[:bootstrap_curl_options] = locate_config_value(:bootstrap_curl_options)
-          bootstrap_common_params(bootstrap,fqdn,ip)
-        end
-		
-	def bootstrap_common_params(bootstrap,fqdn,ip)
-          puts "Entered into bootstrap parameters"
-          bootstrap.config[:run_list] = locate_config_value(:run_list)
-          bootstrap.config[:prerelease] = locate_config_value(:prerelease)
-          bootstrap.config[:first_boot_attributes] = locate_config_value(:json_attributes) || {}
-          bootstrap.config[:bootstrap_version] = locate_config_value(:bootstrap_version)
-          bootstrap.config[:distro] = locate_config_value(:distro) || default_bootstrap_template
-          # setting bootstrap_template value to template_file for backward
-          bootstrap.config[:template_file] = locate_config_value(:template_file) || locate_config_value(:bootstrap_template)
-          bootstrap.config[:node_ssl_verify_mode] = locate_config_value(:node_ssl_verify_mode)
-          bootstrap.config[:node_verify_api_cert] = locate_config_value(:node_verify_api_cert)
-          bootstrap.config[:bootstrap_no_proxy] = locate_config_value(:bootstrap_no_proxy)
-          bootstrap.config[:bootstrap_url] = locate_config_value(:bootstrap_url)
-          bootstrap.config[:bootstrap_vault_file] = locate_config_value(:bootstrap_vault_file)
-          bootstrap.config[:bootstrap_vault_json] = locate_config_value(:bootstrap_vault_json)
-          bootstrap.config[:bootstrap_vault_item] = locate_config_value(:bootstrap_vault_item)
-
-          load_cloud_attributes_in_hints(fqdn,ip)
-          
-          bootstrap
-        end
-		
-	def load_cloud_attributes_in_hints(fqdn,ip)
-          # Modify global configuration state to ensure hint gets set by knife-bootstrap
-          # Query azure and load necessary attributes.
-          puts "Loading hint attributes" 
-          cloud_attributes = {}
-          cloud_attributes["public_ip"] = ip
-          cloud_attributes["vm_name"] = locate_config_value(:chef_node_name)
-          cloud_attributes["public_fqdn"] = fqdn
-          cloud_attributes["public_ssh_port"] = locate_config_value(:ssh_port)
-          
-          Chef::Config[:knife][:hints] ||= {}
-          Chef::Config[:knife][:hints]["azure"] ||= cloud_attributes
-        end
+      
 
     end
   end
 end
-
