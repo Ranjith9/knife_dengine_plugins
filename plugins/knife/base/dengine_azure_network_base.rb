@@ -95,17 +95,6 @@ module Engine
             network_security_group_id: "/subscriptions/#{Chef::Config[:knife][:azure_subscription_id]}/resourceGroups/#{resource_group}/providers/Microsoft.Network/networkSecurityGroups/#{nsg_name}",
             route_table_id: "/subscriptions/#{Chef::Config[:knife][:azure_subscription_id]}/resourceGroups/#{resource_group}/providers/Microsoft.Network/routeTables/#{route_table}"
                                         )
-    end
-
-    def check_data_bag(name)
-        databag_item = Chef::DataBagItem.new
-          if Chef::DataBag.list.key?("#{name}")
-          return 0
-          else
-          return 1
-          end
-    end
-
-	
+    end	
   end
 end

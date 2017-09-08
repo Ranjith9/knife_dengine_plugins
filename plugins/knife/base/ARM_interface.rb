@@ -398,7 +398,7 @@ module Azure
                 ui.log("-------------------------------")
                 ui.log("Virtual Machine name is: #{deploy.resource_name}")
                 ui.log("Virtual Machine ID is: #{deploy.id}")
-#                show_server(deploy.resource_name, params[:azure_resource_group_name])
+                show_server(deploy.resource_name, params[:azure_resource_group_name])
               end
             end
           end

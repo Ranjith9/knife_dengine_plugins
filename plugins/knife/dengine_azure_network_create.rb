@@ -7,34 +7,52 @@ module Engine
     include DengineAzureNetworkBase
     include DengineAzureSdkNetworkBase
     include DengineAzureFogNetworkBase
-	
+
 
       banner 'knife dengine azure network create (options)'
-	
+
       option :name,
-      :short => '-n NETWORK_NAME',
-      :long => '--name NETWORK_NAME',
-      :description => "The name of the network that has to be created"
-	  
+      :short => '-e ENVIRONMENT_NAME',
+      :long => '--name ENVIRONMENT_NAME',
+      :description => "The name of the environment in which the network has to be created"
+
       option :resource_group,
       :short => '-r RESOURCE_GROUP_NAME',
       :long => '--resource-group-name RESOURCE_GROUP_NAME',
-      :description => "The name of Resource group in which the network that has to be created"	
-  
+      :description => "The name of Resource group in which the network that has to be created"
+
     def run
       name = config[:name]
       resource_group = config[:resource_group]
-        # validating data_bag
-      data_bag_find = check_data_bag(name)
-      puts data_bag_find
 
-        if data_bag_find == 1
-          create_network(name)
-        else
-          puts "#{ui.color('Network already exists please check', :cyan)}"
-        end    
+        if Chef::DataBag.list.key?("networks")
+
+          puts "#{config[:name]}_network"
+          puts ''
+          puts "#{ui.color('Found databag for this', :cyan)}"
+          puts "#{ui.color('Searching data for current application in to the data bag', :cyan)}"
+          puts ''
+          query = Chef::Search::Query.new
+          query_value = query.search(:networks, "id:#{config[:name]}")
+            if query_value[2] == 1
+              puts ""
+              puts "#{ui.color("The loadbalancer by name #{config[:name]} already exists please check", :cyan)}"
+              puts "#{ui.color("Hence we are quiting ", :cyan)}"
+              puts ""
+              exit
+            else
+              puts "#{ui.color("The data bag item #{config[:name]} is not present")}"
+              puts "#{ui.color("Hence we are Creating #{config[:name]}_network ", :cyan)}"
+              create_network(name)
+            end
+         else
+           puts ''
+           puts "#{ui.color("Didn't found databag for this", :cyan)}"
+           puts "#{ui.color("Hence we are Creating #{config[:name]}_network ", :cyan)}"
+           create_network(name)
+         end	  
     end
-	
+
     def create_network(name)
 
 # CIDR details
@@ -48,7 +66,7 @@ module Engine
       puts "#{ui.color('Creating Security group for the environment', :cyan)}"
       azure_nsg1 = create_security_group("#{name}_nsg1", resource_group)
       azure_nsg2 = create_security_group("#{name}_nsg2", resource_group)
-		
+
 # creation of Security Rule for Nsg
       puts "#{ui.color('Creating Security group for the environment', :cyan)}"
       security_rule1 = create_security_rule_for_nsg("#{name}_nsg_rule", "#{name}_nsg1", sub_cidr1, resource_group)
@@ -69,37 +87,57 @@ module Engine
       puts " "
 
 # creation of Subnet
-      puts "#{ui.color('creating subnet for the environment', :cyan)}"	  
+      puts "#{ui.color('creating subnet for the environment', :cyan)}"
       azure_sub1 = create_subnet(sub1_name,sub_cidr1, "#{name}_vpn", "#{name}_nsg1", "#{name}_route_table1", resource_group)
       azure_sub2 = create_subnet(sub2_name,sub_cidr2, "#{name}_vpn", "#{name}_nsg2", "#{name}_route_table2", resource_group)
 
-# creating and adding data to data_bag
-      users = Chef::DataBag.new
-      users.name("#{name}")
-      users.create
-      data = {
-             'id' => "#{name}",
-             'VPN-ID' => "#{name}_vpn",
-             'SUBNET-ID' => ['sub1,sub2'],
-             'SECURITY-ID' => ["#{name}_nsg1","#{name}_nsg2"],
-             'ROUTE-ID' => ["#{name}_route_table1","#{name}_route_table2"]
-             }
-      databag_item = Chef::DataBagItem.new
-      databag_item.data_bag("#{name}")
-      databag_item.raw_data = data
-      databag_item.save
+	  store_network_data(name)
+	end
 
-      # printing resource details
-      puts ''
-      puts "========================================================="
-      puts "#{ui.color('vpn-id', :magenta)}          	: #{azure_vpn}"
-      puts "#{ui.color('subnet-ids', :magenta)}       	: #{azure_sub1},#{azure_sub2}"
-      puts "#{ui.color('security-group-id', :magenta)}  : #{azure_nsg1},#{azure_nsg2}"
-      puts "#{ui.color('route-table-id', :magenta)}	: #{azure_route_table1},#{azure_route_table2}"
-      puts "========================================================="
-      puts ''
+	def store_network_data(name)
+	
+	  if Chef::DataBag.list.key?("networks")
+         puts ''
+         puts "#{ui.color('Found databag for this', :cyan)}"
+         puts "#{ui.color('Writing data in to the data bag item', :cyan)}"
+         puts ''
 
-      end
+         data = {
+                'id' => "#{name}",
+                'VPN-ID' => "#{name}_vpn",
+                'SUBNET-ID' => ["#{name}_sub1","#{name}sub2"],
+                'SECURITY-ID' => ["#{name}_nsg1","#{name}_nsg2"],
+                'ROUTE-ID' => ["#{name}_route_table1","#{name}_route_table2"]
+                }
+         dengine_item = Chef::DataBagItem.new
+         dengine_item.data_bag("networks")
+         dengine_item.raw_data = data
+         dengine_item.save
+
+         puts "#{ui.color('Data has been written in to databag successfully', :cyan)}"
+	  else
+	     puts ''
+         puts "#{ui.color('Was not able to fine databag for this', :cyan)}"
+         puts "#{ui.color('Hence creating databag', :cyan)}"
+         puts ''
+         users = Chef::DataBag.new
+         users.name("networks")
+         users.create
+         data = {
+                'id' => "#{name}",
+                'VPN-ID' => "#{name}_vpn",
+                'SUBNET-ID' => ["#{name}_sub1","#{name}sub2"],
+                'SECURITY-ID' => ["#{name}_nsg1","#{name}_nsg2"],
+                'ROUTE-ID' => ["#{name}_route_table1","#{name}_route_table2"]
+                }
+         dengine_item = Chef::DataBagItem.new
+         dengine_item.data_bag("networks")
+         dengine_item.raw_data = data
+         dengine_item.save
+
+         puts "#{ui.color('Data has been written in to databag successfully', :cyan)}"
+	  end
+    end
   end
 end
 
