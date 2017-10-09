@@ -26,6 +26,8 @@ module Engine
       name = config[:name]
       resource_group = config[:resource_group]
       vm_name = config[:vm_name]
+        t = Time.new
+        puts "#{t.hour}:#{t.min}:#{t.sec}"
         vm = client.virtual_machines.get("#{resource_group}", "#{vm_name}", expand = nil, custom_headers = nil)
         source = vm.id
         client.virtual_machines.power_off("#{resource_group}", "#{vm_name}", custom_headers = nil)
@@ -38,6 +40,9 @@ module Engine
         params.location = 'CentralIndia'
         promise = client.images.create_or_update("#{resource_group}", "#{name}", params, custom_headers = nil)
         puts "The Image #{name} is created from VM #{vm_name}"
+
+        o = Time.new
+        puts "#{o.hour}:#{o.min}:#{o.sec}"
 #        puts "Restaring the VM #{vm_name} again..."
 #        client.virtual_machines.restart("#{resource_group}", "#{vm_name}", custom_headers = nil)
       

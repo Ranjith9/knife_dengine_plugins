@@ -360,8 +360,9 @@ module Azure
             params[:azure_resource_group_name],
             params[:azure_vnet_name],
             params[:azure_vnet_subnet_name]
+#            params[:azure_sec_group_name],
+#            params[:azure_route_table]
           )
-#          params[:availability_set_name] = params[:azure_availability_set]
           if params[:tcp_endpoints]
             if @platform == 'Windows'
               params[:tcp_endpoints] = params[:tcp_endpoints] + ",3389"

@@ -36,7 +36,7 @@ module Engine
                  lbr = LoadBalancingRule.new
                   lbr.frontend_ipconfiguration = [ip] 
                   lbr.backend_address_pool = ["#{env}_vm_pool"]
-                  lbr.probe = ['HealthProbe']
+#                  lbr.probe = [params.probes]
                   lbr.protocol = 'Tcp'
                   lbr.load_distribution = "Default"
                   lbr.frontend_port = 80
@@ -46,7 +46,7 @@ module Engine
                   lbr.name = 'lb_rule'
                 params.load_balancing_rules = [lbr]
 	          pro = Probe.new
-		  pro.load_balancing_rules = 'lb_rule'
+		  pro.load_balancing_rules = [lbr]
 		  pro.protocol = 'http'
 		  pro.port = 80
 		  pro.number_of_probes = 2
@@ -54,7 +54,7 @@ module Engine
 		  pro.name = 'HealthProbe'
 		params.probes = [pro]
 		  inr = InboundNatRule.new
-		  inr.frontend_ipconfiguration = [params.frontend_ipconfigurations]
+		  inr.frontend_ipconfiguration = [ip]
 		  inr.protocol = 'Tcp'
 		  inr.frontend_port = 1121
 		  inr.backend_port = 1121

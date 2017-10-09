@@ -33,6 +33,16 @@ class Chef
         :long => "--ssh-port PORT",
         :description => "The ssh port. Default is 22."
 
+      option :bootstrap_protocol,
+        :long => "--bootstrap-protocol protocol",
+        :description => "Protocol to bootstrap windows servers. options: 'winrm' or 'ssh' or 'cloud-api'.",
+        :default => "ssh"
+
+      option :winrm_port,
+        :long => "--winrm-port PORT",
+        :description => "The winrm port. Default is 5985.",
+        :default => 5985
+
       option :node_ssl_verify_mode,
         :long        => "--node-ssl-verify-mode [peer|none]",
         :description => "Whether or not to verify the SSL cert for all HTTPS requests."
@@ -190,6 +200,16 @@ class Chef
         :description => "Enter the backend pool in which the VM has to be created.",
         :default => 'null'
 
+      option :azure_sec_group_name,
+        :long => "--sec-group-name SEC-GROUP-NAME",
+        :description => "Enter the security name in which the VM has to be created.",
+        :default => 'null'
+
+      option :azure_route_table,
+        :long => "--route-table-name ROUTE-TABLE-NAME",
+        :description => "Enter the security name in which the VM has to be created.",
+        :default => 'null'
+
       def run
         $stdout.sync = true
 
@@ -205,8 +225,12 @@ class Chef
           set_default_image_reference!
 
           ssh_override_winrm if !is_image_windows?
+          t = Time.new
+          puts "#{t.hour}:#{t.min}:#{t.sec}"
 
           vm_details = service.create_server(create_server_def)
+          p = Time.new
+          puts "#{p.hour}:#{p.min}:#{p.sec}"
 
           ip_attr = get_ip_attributes(locate_config_value(:azure_resource_group_name), locate_config_value(:azure_vm_name))
 
@@ -218,11 +242,6 @@ class Chef
         end
       end
 
-        def get_node(name)
-          node_query = Chef::Search::Query.new
-          node_found = node_query.search('node', "name:#{name}").first
-          return node_found
-        end
 
       def create_server_def
         server_def = {
@@ -250,7 +269,9 @@ class Chef
           :azure_availability_set => locate_config_value(:azure_availability_set),
           :azure_loadbalancer_name => locate_config_value(:azure_loadbalancer_name),
           :azure_backend_pool => locate_config_value(:azure_backend_pool),
-          :azure_vm_nat_rule => locate_config_value(:azure_vm_nat_rule)
+          :azure_vm_nat_rule => locate_config_value(:azure_vm_nat_rule),
+          :azure_route_table => locate_config_value(:azure_route_table),
+          :azure_sec_group_name => locate_config_value(:azure_sec_group_name)
         }
 
         server_def[:tcp_endpoints] = locate_config_value(:tcp_endpoints) if locate_config_value(:tcp_endpoints)

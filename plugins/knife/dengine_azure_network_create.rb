@@ -63,20 +63,28 @@ module Engine
       sub2_name = "#{name}_sub2"
       resource_group = config[:resource_group]
 # creation of Security Group
+      m = Time.new
+      puts "#{m.hour}:#{m.min}:#{m.sec}"
       puts "#{ui.color('Creating Security group for the environment', :cyan)}"
       azure_nsg1 = create_security_group("#{name}_nsg1", resource_group)
       azure_nsg2 = create_security_group("#{name}_nsg2", resource_group)
 
 # creation of Security Rule for Nsg
+      l = Time.new
+      puts "#{l.hour}:#{l.min}:#{l.sec}"
       puts "#{ui.color('Creating Security group for the environment', :cyan)}"
       security_rule1 = create_security_rule_for_nsg("#{name}_nsg_rule", "#{name}_nsg1", sub_cidr1, resource_group)
       security_rule2 = create_security_rule_for_nsg("#{name}_nsg_rule", "#{name}_nsg2", sub_cidr2, resource_group)
 
 # creation of VPN
+      k = Time.new
+      puts "#{k.hour}:#{k.min}:#{k.sec}"
       puts "#{ui.color('Creating vpc for the environment', :cyan)}"
       azure_vpn = create_vpn(resource_group, "#{name}_vpn", vpn_cidr)
 
 # creation of Route Table
+      o = Time.new
+      puts "#{o.hour}:#{o.min}:#{o.sec}"
       puts "#{ui.color('Creating Route Tables for the environment', :cyan)}"
       puts " "
       azure_route_table1 = create_route_table("#{name}_route_table1", sub_cidr1, resource_group)
@@ -87,9 +95,14 @@ module Engine
       puts " "
 
 # creation of Subnet
+      t = Time.new
+      puts "#{t.hour}:#{t.min}:#{t.sec}"
       puts "#{ui.color('creating subnet for the environment', :cyan)}"
       azure_sub1 = create_subnet(sub1_name,sub_cidr1, "#{name}_vpn", "#{name}_nsg1", "#{name}_route_table1", resource_group)
       azure_sub2 = create_subnet(sub2_name,sub_cidr2, "#{name}_vpn", "#{name}_nsg2", "#{name}_route_table2", resource_group)
+      a = Time.new
+      puts "#{a.hour}:#{a.min}:#{a.sec}"
+
 
 	  store_network_data(name)
 	end

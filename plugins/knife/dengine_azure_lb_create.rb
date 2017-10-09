@@ -51,6 +51,8 @@ module Engine
 
 # Creating AvailabilitySet for Backend pool
     def create_availability_set
+        t = Time.new
+        puts "#{t.hour}:#{t.min}:#{t.sec}"
         puts ""
         puts "Creating AvailabilitySet for Backend pool of Loadbalancer"
         puts ""
@@ -67,6 +69,8 @@ module Engine
 
 # Creating Public IP for Loadbalancer
     def create_public_ip(envmnt)
+        o = Time.new
+        puts "#{o.hour}:#{o.min}:#{o.sec}"
         puts ""
         puts "Creating Public IP for Loadbalancer"
         puts ""
@@ -87,12 +91,15 @@ module Engine
 	end
 
 # Creating Loadbalancer
+       
     def create_lb(envmnt)
         puts "Im in Create_lb #{envmnt}"
 	create_availability_set
         lb_dns_name = create_public_ip(envmnt)
         puts ""
         puts "Creating Loadbalancer"
+        k = Time.new
+        puts "#{k.hour}:#{k.min}:#{k.sec}"
         lb = service.load_balancers.create(
         name: "#{config[:env]}_lb",
         resource_group: "#{config[:resource_group]}",
@@ -165,6 +172,8 @@ module Engine
                     }
                   ]
         )
+        i = Time.new
+        puts "#{i.hour}:#{i.min}:#{i.sec}"
         puts "name = #{lb.name}"
         lb_name = lb.name
         puts ""

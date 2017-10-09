@@ -125,6 +125,7 @@ module Azure::ARM
         computerName = "[variables('vmName')]"
         uri = "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'.vhd')]"
         netid = "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+        vnet =  "[concat('Microsoft.Network/virtualNetworks/', variables('vnetID'))]"
 
         # Extension Variables
         extName = "[concat(variables('vmName'),'/', variables('vmExtensionName'))]"
@@ -307,7 +308,7 @@ module Azure::ARM
         "variables"=> {
           "lbName"=> "#{params[:azure_loadbalancer_name]}",
           "natRule"=> "#{params[:azure_vm_nat_rule]}",
-          "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+          "lbID"=> "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
           "lbPoolName"=> "#{params[:azure_backend_pool]}",
           "lbNatID"=> "[concat(variables('lbID'),'/inboundNatRules/nat3')]",
 	  "availabilitySetName"=> "#{params[:azure_availability_set]}",
@@ -317,7 +318,8 @@ module Azure::ARM
           "imageOffer"=> "#{params[:azure_image_reference_offer]}",
           "OSDiskName"=> "#{params[:azure_os_disk_name]}",
           "nicName"=> "#{params[:azure_vm_name]}",
-          "subnetName"=> "#{params[:azure_vnet_subnet_name]}",
+          "routeTable" => "#{params[:azure_route_table]}",
+          "subnetName" => "#{params[:azure_vnet_subnet_name]}",
           "storageAccountType"=> "#{params[:azure_storage_account_type]}",
           "publicIPAddressName"=> "#{params[:azure_vm_name]}",
           "publicIPAddressType"=> "Dynamic",
@@ -326,6 +328,7 @@ module Azure::ARM
           "vmSize"=> "#{params[:vm_size]}",
           "virtualNetworkName"=> "#{params[:vnet_config][:virtualNetworkName]}",
           "secgrpname" => "#{params[:azure_sec_group_name]}",
+          "networkSecurityGroupName" => "#{params[:azure_sec_group_name]}",
           "vnetID"=> "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
           "subnetRef"=> "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
           "apiVersion"=> "2015-06-15",
@@ -354,10 +357,10 @@ module Azure::ARM
             "name"=> "[variables('storageAccountName')]",
             "apiVersion": "2017-06-01",
 #            "apiVersion"=> "[variables('apiVersion')]",
-            "kind": "Storage",
+            "kind"=> "Storage",
             "location"=> "[resourceGroup().location]",
-            "sku": {
-              "name": "[variables('storageAccountType')]",
+            "sku"=> {
+              "name"=> "[variables('storageAccountType')]",
             },
             "properties"=> {
               "storageAccountType"=> "[variables('storageAccountType')]"
@@ -365,7 +368,7 @@ module Azure::ARM
           },
           {
 #            "apiVersion"=> "[variables('apiVersion')]",
-            "apiVersion": "2017-06-01",
+            "apiVersion"=> "2017-06-01",
             "type" => "Microsoft.Network/publicIPAddresses",
             "name" => publicIPAddressName,
             "location"=> "[resourceGroup().location]",
@@ -382,7 +385,7 @@ module Azure::ARM
           },
           {
 #            "apiVersion"=> "[variables('apiVersion')]",
-            "apiVersion": "2017-06-01",
+            "apiVersion"=> "2017-06-01",
             "type"=> "Microsoft.Network/virtualNetworks",
             "name"=> "[variables('virtualNetworkName')]",
             "location"=> "[resourceGroup().location]",
@@ -391,11 +394,14 @@ module Azure::ARM
                 "addressPrefixes"=> params[:vnet_config][:addressPrefixes]
               },
               "subnets"=> params[:vnet_config][:subnets]
+#              "subnets"=> [
+#                "id"=> "[variables('subnetRef')]"
+#              ]
             }
           },
           {
-#            "apiVersion"=> "[variables('apiVersion')]",
-            "apiVersion": "2017-06-01",
+            "apiVersion"=> "[variables('apiVersion')]",
+#            "apiVersion"=> "2017-06-01",
             "type"=> "Microsoft.Network/networkInterfaces",
             "name"=> nicName,
             "location"=> "[resourceGroup().location]",
@@ -406,7 +412,6 @@ module Azure::ARM
             "dependsOn" => [
               depNic1,
               "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-#              "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
             ],
             "properties"=> {
               "ipConfigurations"=> [
@@ -433,9 +438,9 @@ module Azure::ARM
                   }
                 }
               ],
-#            "virtualMachine": {
-#                    "id": "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
-#                }
+              "networkSecurityGroup"=> ({
+                  "id"=> "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('secgrpname'))]"
+              }if params[:azure_sec_group_name] != 'null')
             }
           },
           {
@@ -499,7 +504,7 @@ module Azure::ARM
                 }
               }
             }
-          },
+          }
         ]
       }
 
