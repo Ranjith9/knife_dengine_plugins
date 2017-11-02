@@ -333,7 +333,7 @@ module Azure::ARM
           "subnetRef"=> "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
           "apiVersion"=> "2015-06-15",
 # 2015-06-15
-          "vmExtensionName"=> "#{params[:chef_extension]}",
+          "vmExtensionName"=> "CustomScriptExtension",
           "sshKeyPath" => "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]"
         },
         "resources"=> [
@@ -504,6 +504,28 @@ module Azure::ARM
                 }
               }
             }
+          },
+          {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": extName,
+            "apiVersion": "2017-03-30",
+            "location": "CentralIndia",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.7",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "https://test121w.blob.core.windows.net/mine1212/enable_winrm.ps1"
+                    ],
+                    "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File enable_winrm.ps1"
+                },
+                "protectedSettings": {}
+            }  
           }
         ]
       }
