@@ -14,7 +14,7 @@ module Engine
 
         blobs = client.blob_client
 
-        t = blobs.create_container('mine1212', :public_access_level => 'blob' )
+        t = blobs.create_container('windows', :public_access_level => 'blob' )
         p = t.name
 
         content = ::File.open('/root/.chef/plugins/knife/enable_winrm.ps1', 'rb') { |file| file.read }

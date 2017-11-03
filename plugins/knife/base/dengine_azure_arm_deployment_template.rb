@@ -520,7 +520,7 @@ module Azure::ARM
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "https://test121w.blob.core.windows.net/mine1212/enable_winrm.ps1"
+                        "https://dengine.blob.core.windows.net/windows/enable_winrm.ps1"
                     ],
                     "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File enable_winrm.ps1"
                 },
