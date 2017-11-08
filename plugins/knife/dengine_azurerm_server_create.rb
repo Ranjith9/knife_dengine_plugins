@@ -271,6 +271,7 @@ class Chef
           :azure_backend_pool => locate_config_value(:azure_backend_pool),
           :azure_vm_nat_rule => locate_config_value(:azure_vm_nat_rule),
           :azure_route_table => locate_config_value(:azure_route_table),
+          :azure_image_os_type => locate_config_value(:azure_image_os_type),
           :azure_sec_group_name => locate_config_value(:azure_sec_group_name)
         }
 

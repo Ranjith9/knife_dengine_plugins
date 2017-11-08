@@ -5,6 +5,7 @@ module Engine
   module DengineAzureSdkStorageBase
 
       include Azure::ARM::Storage
+      include Azure::ARM::Storage::Models
 
       def self.included(includer)
       includer.class_eval do

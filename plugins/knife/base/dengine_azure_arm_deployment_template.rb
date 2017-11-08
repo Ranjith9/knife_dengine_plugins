@@ -337,21 +337,6 @@ module Azure::ARM
           "sshKeyPath" => "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]"
         },
         "resources"=> [
-#          {
-#            "type": "Microsoft.Compute/availabilitySets",
-#            "name": "[variables('availabilitySetName')]",
-#            "apiVersion": "2016-04-30-preview",
-#            "apiVersion": "[variables('apiVersion')]",
-#            "sku"=> {
-#              "name"=> 'Aligned' 
-#            },
-#            "location": "[resourceGroup().location]",
-#            "properties": {
-#              "platformUpdateDomainCount": 5,
-#              "platformFaultDomainCount": 2,
-#              "managed": "true"
-#            },
-#          },
           {
             "type"=> "Microsoft.Storage/storageAccounts",
             "name"=> "[variables('storageAccountName')]",
@@ -504,8 +489,12 @@ module Azure::ARM
                 }
               }
             }
-          },
-          {
+          }
+        ]
+      }
+
+      if params[:azure_image_os_type] == "windows"
+        set_val = {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": extName,
             "apiVersion": "2017-03-30",
@@ -520,15 +509,22 @@ module Azure::ARM
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "https://dengine.blob.core.windows.net/windows/enable_winrm.ps1"
+#                        "https://dengine.blob.core.windows.net/windows/enable_winrm.ps1"
+                        "[concat('https', '://', variables('storageAccountName'), '.blob.core.windows.net', '/windows/enable_winrm.ps1')]"
                     ],
                     "commandToExecute": "powershell -ExecutionPolicy Unrestricted -File enable_winrm.ps1"
                 },
                 "protectedSettings": {}
-            }  
+            }
           }
-        ]
-      }
+
+        length = template['resources'].length.to_i - 1
+        for i in 0..length do
+          if template['resources'][i]['type'] == "Microsoft.Compute/virtualMachines/extensions"
+          end
+        end
+        template['resources'].insert(length, set_val)
+      end
 
       if params[:tcp_endpoints]
         sec_grp_json = tcp_ports(params[:tcp_endpoints], params[:azure_vm_name])

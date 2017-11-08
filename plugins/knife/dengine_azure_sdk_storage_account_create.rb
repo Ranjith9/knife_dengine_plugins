@@ -12,34 +12,35 @@ module Engine
 
       def run
         time = Time.new
-        params = Azure::ARM::Storage::Models::StorageAccountCreateParameters.new
+        params = StorageAccountCreateParameters.new
         params.location = 'CentralIndia'
-        sku = Models::Sku.new
+        sku = Sku.new
         sku.name = 'Standard_LRS'
         params.sku = sku
-        params.kind = Models::Kind::Storage
+        params.kind = 'Storage'
         puts "Creating Storage Account #{time.hour}:#{time.min}:#{time.sec}"
-#        promise = storage_client.storage_accounts.create('Dengine', 'dengine', params)
+        promise = storage_client.storage_accounts.create('Dengine', 'testpilla121', params)
         t = Time.new
         puts "Created Storage Account #{t.hour}:#{t.min}:#{t.sec}"
 
-        k = storage_client.storage_accounts.list_keys('Dengine', 'dengine', custom_headers = nil)
-        key = k.keys[0].value
+        k = storage_client.storage_accounts.list_keys('Dengine', 'testpilla121', custom_headers = nil)
+#        puts k.keys.size
+        key = k.keys.sample(1)
+#        puts key[0].value
         
-        client = Azure::Storage::Client.create(:storage_account_name => 'dengine', :storage_access_key => "#{key}")
+        client = Azure::Storage::Client.create(:storage_account_name => 'testpilla121', :storage_access_key => "#{key[0].value}")
 
         blobs = client.blob_client
 
-        t = blobs.create_container('yoyo1', :public_access_level => 'blob' )
+        t = blobs.create_container('windows', :public_access_level => 'blob' )
         p = t.name
-        puts p
 
         content = ::File.open('/root/.chef/plugins/knife/enable_winrm.ps1', 'rb') { |file| file.read }
         blobs.create_block_blob(p, 'enable_winrm.ps1', content) 
 
-        puts blobs.get_blob('windows', 'enable_winrm.ps1')
+#        puts blobs.get_blob('windows', 'enable_winrm.ps1')
 
-        uri = "https://dengine.blob.core.windows.net/#{p}/enable_winrm.ps1"
+        uri = "https://testpilla121.blob.core.windows.net/#{p}/enable_winrm.ps1"
         puts "#{uri}"
       end
 
