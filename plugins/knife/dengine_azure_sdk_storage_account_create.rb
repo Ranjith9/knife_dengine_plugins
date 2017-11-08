@@ -19,16 +19,16 @@ module Engine
         params.sku = sku
         params.kind = 'Storage'
         puts "Creating Storage Account #{time.hour}:#{time.min}:#{time.sec}"
-        promise = storage_client.storage_accounts.create('Dengine', 'testpilla121', params)
+        promise = storage_client.storage_accounts.create('Dengine', 'dengine', params)
         t = Time.new
         puts "Created Storage Account #{t.hour}:#{t.min}:#{t.sec}"
 
-        k = storage_client.storage_accounts.list_keys('Dengine', 'testpilla121', custom_headers = nil)
+        k = storage_client.storage_accounts.list_keys('Dengine', 'dengine', custom_headers = nil)
 #        puts k.keys.size
         key = k.keys.sample(1)
 #        puts key[0].value
         
-        client = Azure::Storage::Client.create(:storage_account_name => 'testpilla121', :storage_access_key => "#{key[0].value}")
+        client = Azure::Storage::Client.create(:storage_account_name => 'dengine', :storage_access_key => "#{key[0].value}")
 
         blobs = client.blob_client
 
@@ -40,7 +40,7 @@ module Engine
 
 #        puts blobs.get_blob('windows', 'enable_winrm.ps1')
 
-        uri = "https://testpilla121.blob.core.windows.net/#{p}/enable_winrm.ps1"
+        uri = "https://dengine.blob.core.windows.net/#{p}/enable_winrm.ps1"
         puts "#{uri}"
       end
 

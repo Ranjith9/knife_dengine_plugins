@@ -12,6 +12,33 @@ class Chef
         def default_bootstrap_template
           is_image_windows? ? 'windows-chef-client-msi' : 'chef-full'
         end
+		
+        def tcp_test_ssh(fqdn, port)
+          tcp_socket = TCPSocket.new(fqdn, port)
+          readable = IO.select([tcp_socket], nil, nil, 5)
+          if readable
+            Chef::Log.debug("sshd accepting connections on #{fqdn}, banner is #{tcp_socket.gets}")
+            yield
+            true
+          else
+            false
+          end
+          rescue SocketError
+            sleep 2
+            false
+          rescue Errno::ETIMEDOUT
+            false
+          rescue Errno::EPERM
+            false
+          rescue Errno::ECONNREFUSED
+            sleep 2
+            false
+          rescue Errno::EHOSTUNREACH
+            sleep 2
+            false
+          ensure
+            tcp_socket && tcp_socket.close
+        end
 
         def tcp_test_winrm(fqdn, port)
           hostname = fqdn
@@ -36,17 +63,32 @@ class Chef
         end
 
         def bootstrap_exec(fqdn,ip)
-            
+		
+	  if is_image_windows?
             port = 5985
 
-            print "#{ui.color("Waiting for winrm on #{fqdn}:#{port}", :magenta)}"
+            print "#{ui.color("Waiting for winrm on #{fqdn}:winrm_port ", :magenta)}"
 
             print(".") until tcp_test_winrm(fqdn,port) {
               sleep @initial_sleep_delay ||= 10
               puts("done")
             }
-			puts("\n")
+            puts("\n")
             bootstrap_for_windows_node(fqdn, ip, port).run
+			
+	  else
+	    port = 22
+
+            print ui.color("Waiting for sshd on #{fqdn}:ssh_port ", :magenta)
+
+            print(".") until tcp_test_ssh(fqdn,port) {
+              sleep @initial_sleep_delay ||= 10
+              puts("done")
+            }
+
+            puts("\n")
+            bootstrap_for_node(fqdn, ip, port).run
+          end
         end
 
         def bootstrap_for_windows_node(fqdn, ip, port)
@@ -76,12 +118,12 @@ class Chef
 
         def bootstrap_for_node(fqdn, ip, port)
           bootstrap = Chef::Knife::Bootstrap.new
-          bootstrap.name_args = [fqdn]
+          bootstrap.name_args = fqdn
           bootstrap.config[:ssh_user] = locate_config_value(:ssh_user)
           bootstrap.config[:ssh_password] = locate_config_value(:ssh_password)
           bootstrap.config[:ssh_port] = port
           bootstrap.config[:identity_file] = locate_config_value(:identity_file)
-          bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name)
+          bootstrap.config[:chef_node_name] = locate_config_value(:chef_node_name) 
           bootstrap.config[:use_sudo] = true unless locate_config_value(:ssh_user) == 'root'
           bootstrap.config[:use_sudo_password] = true if bootstrap.config[:use_sudo]
           bootstrap.config[:environment] = locate_config_value(:environment)
@@ -130,7 +172,7 @@ class Chef
           Chef::Config[:knife][:hints] ||= {}
           Chef::Config[:knife][:hints]["azure"] ||= cloud_attributes
         end
-    
+
         def get_chef_extension_name
           is_image_windows? ? "ChefClient" : "LinuxChefClient"
         end
