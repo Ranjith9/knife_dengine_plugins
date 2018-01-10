@@ -15,7 +15,9 @@ module Engine
               yo.ip_protocol = 'tcp'
 	      yo.ports = ["22","443","80","8080"]
 	  firewall_object.allowed = [yo]
-	  firewall_object.name = 'fire-rule-1'
+#          firewall_object.direction = 'INGRESS'
+#          firewall_object.destination_ranges = ['192.168.1.0/24','192.168.2.0/24','192.168.21.0/24']
+	  firewall_object.name = 'fire-rule-2'
 	  firewall_object.source_ranges  = ['0.0.0.0/0']
 	  firewall_object.description  = "this is for my enjoyment purpose"
           firewall_object.kind = 'compute#firewall'

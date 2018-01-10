@@ -11,6 +11,7 @@ module Engine
     banner "knife dengine azure sdk storage account create (options)"
 
       def run
+        resource = "Dengine"
         time = Time.new
         params = StorageAccountCreateParameters.new
         params.location = 'CentralIndia'
@@ -19,11 +20,11 @@ module Engine
         params.sku = sku
         params.kind = 'Storage'
         puts "Creating Storage Account #{time.hour}:#{time.min}:#{time.sec}"
-#        promise = storage_client.storage_accounts.create('Dengine', 'dengine1', params)
+        promise = storage_client.storage_accounts.create(resource, 'dengine1', params)
         t = Time.new
         puts "Created Storage Account #{t.hour}:#{t.min}:#{t.sec}"
 
-        k = storage_client.storage_accounts.list_keys('Dengine', 'dengine1', custom_headers = nil)
+        k = storage_client.storage_accounts.list_keys(resource, 'dengine1', custom_headers = nil)
 #        puts k.keys.size
         key = k.keys.sample(1)
 #        puts key[0].value
